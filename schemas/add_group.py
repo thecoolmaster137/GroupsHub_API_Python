@@ -8,3 +8,5 @@ class AddGroup(BaseModel):
     group_desc: Optional[str] = None
     group_rules: Optional[str] = None
     tags: Optional[str] = None
+    app_id: int
+    cat_id: int

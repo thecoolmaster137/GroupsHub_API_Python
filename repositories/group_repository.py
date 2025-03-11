@@ -1,105 +1,116 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from models import Groups, Category, Application
-from schemas import GroupDto, AddGroupDto
+from sqlalchemy.orm import joinedload
+from models.group import Group
+from models.category import Category
+from schemas.add_group import AddGroup
+from schemas.group import Group as GroupSchema
 from typing import List, Optional
 
-class GroupRepository:
-    def __init__(self, db: Session, get_groups):
-        self.db = db
-        self.get_groups = get_groups
+def get_groups(db: Session) -> List[GroupSchema]:
+    """Retrieve all groups from the database and include category name."""
+    results = (
+        db.query(Group, Category.cat_name)  # Fetch group and category name
+        .outerjoin(Category, Group.cat_id == Category.cat_id)
+        .all()
+    )
 
-    def exist_group(self, group_link: str) -> Optional[GroupDto]:
-        group = self.db.query(Groups).filter(Groups.groupLink == group_link).first()
-        if group:
-            category = self.db.query(Category).filter(Category.catId == group.catId).first()
-            return GroupDto(
-                groupId=group.groupId,
-                groupName=group.groupName,
-                GroupImage=group.GroupImage,
-                catName=category.catName,
-                groupDesc=group.groupDesc,
-                groupLink=group.groupLink,
-                groupRules=group.groupRules,
-                country=group.country,
-                Language=group.Language,
-                tags=group.tags
-            )
-        return None
-
-    def get_all(self):
-        return self.db.query(Groups).all()
-
-    def get_by_id(self, group_id: int) -> Optional[GroupDto]:
-        group = self.db.query(Groups).filter(Groups.groupId == group_id).first()
-        if group:
-            category = self.db.query(Category).filter(Category.catId == group.catId).first()
-            return GroupDto(
-                groupId=group.groupId,
-                groupName=group.groupName,
-                GroupImage=group.GroupImage,
-                catName=category.catName,
-                groupDesc=group.groupDesc,
-                groupLink=group.groupLink,
-                groupRules=group.groupRules,
-                country=group.country,
-                Language=group.Language,
-                tags=group.tags
-            )
-        return None
-
-    def get_groups(self) -> List[GroupDto]:
-        groups = self.db.query(Groups).order_by(Groups.groupId).all()
-        return self.get_groups.list_group_dto(groups)
-
-    def get_group_by_category(self, cat_id: int) -> List[GroupDto]:
-        groups = self.db.query(Groups).filter(Groups.catId == cat_id).all()
-        return self.get_groups.list_group_dto(groups)
-
-    def add_group(self, cat_id: int, app_id: int, add_group_dto: AddGroupDto) -> Optional[GroupDto]:
-        if self.exist_group(add_group_dto.groupLink):
-            raise HTTPException(status_code=400, detail="Group already exists")
-        
-        group = Groups(
-            catId=cat_id,
-            appId=app_id,
-            groupName=add_group_dto.groupName,
-            GroupImage=add_group_dto.GroupImage,
-            groupLink=add_group_dto.groupLink,
-            groupDesc=add_group_dto.groupDesc,
-            groupRules=add_group_dto.groupRules,
-            country=add_group_dto.country,
-            Language=add_group_dto.Language,
-            tags=add_group_dto.tags
+    # Convert query results into list of GroupSchema objects
+    return [
+        GroupSchema(
+            **group.__dict__,
+            cat_name=cat_name  # Extract category name from tuple
         )
-        self.db.add(group)
-        self.db.commit()
-        self.db.refresh(group)
-        return self.get_by_id(group.groupId)
+        for group, cat_name in results
+    ]
 
-    def update_group(self, group_id: int, cat_id: int, app_id: int, add_group_dto: AddGroupDto) -> Optional[GroupDto]:
-        group = self.db.query(Groups).filter(Groups.groupId == group_id).first()
-        if not group:
-            return None
-        
-        group.catId = cat_id
-        group.appId = app_id
-        group.groupLink = add_group_dto.groupLink
-        group.groupDesc = add_group_dto.groupDesc
-        group.groupRules = add_group_dto.groupRules
-        group.country = add_group_dto.country
-        group.Language = add_group_dto.Language
-        group.tags = add_group_dto.tags
-        
-        self.db.commit()
-        self.db.refresh(group)
-        return self.get_by_id(group.groupId)
+def get_group_by_id(db: Session, group_id: int) -> Optional[GroupSchema]:
+    """Retrieve a single group by its ID and include category name."""
+    result = (
+        db.query(Group, Category.cat_name)
+        .outerjoin(Category, Group.cat_id == Category.cat_id)
+        .filter(Group.group_id == group_id)
+        .first()
+    )
 
-    def delete_group(self, group_id: int) -> bool:
-        group = self.db.query(Groups).filter(Groups.groupId == group_id).first()
-        if not group:
-            return False
-        
-        self.db.delete(group)
-        self.db.commit()
+    if result:
+        group, cat_name = result
+        return GroupSchema(
+            **group.__dict__,
+            cat_name=cat_name
+        )
+    
+    return None
+
+
+def get_group_by_link(db: Session, group_link: str) -> Group:
+    """Check if a group with the given link already exists."""
+    return db.query(Group).filter(Group.group_link == group_link).first()
+
+def add_group(db: Session, group_data: AddGroup) -> Group:
+    """Add a new group to the database."""
+    new_group = Group(
+        group_name="",  # Will be updated after scraping
+        group_link=group_data.group_link,
+        country=group_data.country,
+        language=group_data.language,
+        group_desc=group_data.group_desc,
+        group_rules=group_data.group_rules,
+        tags=group_data.tags,
+        app_id=group_data.app_id,
+        cat_id=group_data.cat_id,
+        group_image="",  # Will be updated after scraping
+    )
+    db.add(new_group)
+    db.commit()
+    db.refresh(new_group)
+    return new_group
+
+def delete_group(db: Session, group_id: int) -> bool:
+    """Delete a group by its ID."""
+    group = db.query(Group).filter(Group.group_id == group_id).first()
+    if group:
+        db.delete(group)
+        db.commit()
         return True
+    return False
+
+
+def update_group(db: Session, group_id: int, group_data: AddGroup) -> Optional[dict]:
+    """Update an existing group."""
+    group = db.query(Group).filter(Group.group_id == group_id).first()
+
+    if group:
+        # Update group details
+        group.group_link = group_data.group_link
+        group.country = group_data.country
+        group.language = group_data.language
+        group.group_desc = group_data.group_desc
+        group.group_rules = group_data.group_rules
+        group.tags = group_data.tags
+        group.cat_id = group_data.cat_id  # Ensure category is updated
+
+        db.commit()
+        db.refresh(group)
+
+        # Fetch category name
+        cat_name = group.category.cat_name if group.category else None  # Assuming a relationship exists
+
+        # Return a dictionary instead of a Group instance
+        return {
+            "group_id": group.group_id,
+            "group_name": group.group_name,
+            "group_link": group.group_link,
+            "group_image": group.group_image,
+            "cat_id": group.cat_id,
+            "cat_name": cat_name,  # Include category name
+            "country": group.country,
+            "language": group.language,
+            "group_desc": group.group_desc,
+            "group_rules": group.group_rules,
+            "tags": group.tags,
+            "message": "Group updated successfully"
+        }
+
+    return None
+
+

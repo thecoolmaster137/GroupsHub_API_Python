@@ -6,7 +6,7 @@ class Group(BaseModel):
     group_name: str
     group_link: str
     group_image: str
-    cat_name: str
+    cat_name: Optional[str] = None
     cat_id: Optional[int] = None
     country: str
     language: str
