@@ -14,6 +14,7 @@ from routers.application import router as application_router
 # from routers.blog import router as blog_router
 from routers.groups import   router as group_router
 from routers.category import router as category_router
+from routers.report import router as report_router
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -28,6 +29,8 @@ app.include_router(application_router, prefix="/api")
 
 app.include_router(category_router, prefix="/api")
 app.include_router(group_router, prefix="/api")
+
+app.include_router(report_router, prefix="/api")
 
 # app.include_router(groups_router, prefix="/api")
 # app.include_router(users_router, prefix="/api")
