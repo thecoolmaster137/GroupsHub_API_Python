@@ -14,8 +14,6 @@ def get_db():
     finally:
         db.close()
 
-
-
 @router.post("/api/auth/register-admin")
 def register_admin(user: UserCreate, db: Session = Depends(get_db)):
     try:
@@ -24,12 +22,15 @@ def register_admin(user: UserCreate, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    
 @router.post("/signup", response_model=UserResponse)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return create_user(db, user)
+    
+    return create_user(db, user.username, user.email, user.password, False)
+
 
 @router.post("/signin")
 def signin(user: UserLogin, db: Session = Depends(get_db)):
