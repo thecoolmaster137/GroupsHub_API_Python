@@ -4,6 +4,7 @@ from database import get_db
 from repositories.category_repository import CategoryRepository
 from schemas.add_category import AddCategory
 from schemas.category import Category as CategorySchema
+from security import get_current_user
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
@@ -25,11 +26,17 @@ def get_groups_by_category(id: int, db: Session = Depends(get_db)):
     return groups
 
 @router.post("/", response_model=CategorySchema)
-def add_category(category_data: AddCategory, db: Session = Depends(get_db)):
+def add_category(
+    category_data: AddCategory, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Require authentication
+):
+    if not current_user["is_admin"]:  # Only allow admins
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
     new_category = CategoryRepository(db).add_category(category_data)
-    if not new_category:
-        raise HTTPException(status_code=400, detail="Category already exists")
     return CategorySchema(id=new_category.id, name=new_category.name)
+
 
 @router.put("/{id}", response_model=CategorySchema)
 def update_category(id: int, category_data: AddCategory, db: Session = Depends(get_db)):

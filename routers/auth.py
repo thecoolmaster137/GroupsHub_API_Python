@@ -4,6 +4,8 @@ from database import SessionLocal
 from schemas.user import UserCreate, UserLogin, UserResponse
 from repositories.user_repository import create_user, authenticate_user, generate_token
 from models.user import User
+from security import verify_password,create_access_token
+from fastapi import Body
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -14,7 +16,7 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/api/auth/register-admin")
+@router.post("/register-admin")
 def register_admin(user: UserCreate, db: Session = Depends(get_db)):
     try:
         new_admin = create_user(db, user.username, user.email, user.password, is_admin=True)
@@ -31,11 +33,18 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     
     return create_user(db, user.username, user.email, user.password, False)
 
-
 @router.post("/signin")
-def signin(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = authenticate_user(db, user.username, user.password)
-    if not db_user:
+def signin(request: UserLogin = Body(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == request.username).first()
+    
+    if not user or not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
-    token = generate_token(db_user)
-    return {"access_token": token, "token_type": "bearer"}
+    
+    access_token = create_access_token({"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/test")
+async def test_route(data: dict):
+    print("Received data:", data)
+    return {"message": "Received", "data": data}
