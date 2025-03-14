@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# OAuth2 scheme for authentication
+# OAuth2 scheme for authentication (updated token URL)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/signin")
 
 # Password hashing setup

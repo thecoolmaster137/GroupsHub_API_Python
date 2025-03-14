@@ -6,7 +6,7 @@ from schemas.report import Report as ReportSchema
 from schemas.add_report import AddReport
 from repositories.report_repository import ReportRepository
 
-router = APIRouter(prefix="/api/report", tags=["Reports"])
+router = APIRouter(prefix="/report", tags=["Reports"])
 
 
 @router.get("/", response_model=List[ReportSchema])
