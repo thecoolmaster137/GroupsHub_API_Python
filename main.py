@@ -1,8 +1,3 @@
-from models.application import Application
-from models.blog import Blog
-from models.category import Category
-from models.group import Group
-from models.report import Report
 from fastapi import FastAPI
 from database import Base, engine
 from fastapi.openapi.utils import get_openapi

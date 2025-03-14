@@ -28,15 +28,7 @@ def get_reports_by_group_id(group_id: int, db: Session = Depends(get_db)):
     return ReportRepository.get_by_group_id(db, group_id)
 
 
-# @router.post("/", response_model=ReportSchema)
-# def add_report(group_id: int, report_data: AddReport, db: Session = Depends(get_db)):
-#     report = ReportRepository.add_report(db, group_id, report_data)
-#     if report is None:
-#         raise HTTPException(status_code=400, detail="Invalid Group ID")
-#     return report
-
-
-# ✅ Apply authentication **only to this route**
+# Apply authentication **only to this route**
 @router.post("/", response_model=ReportSchema)
 def add_report(
     group_id: int,
@@ -55,16 +47,7 @@ def add_report(
     
     return report
 
-
-# @router.delete("/{id}")
-# def delete_report(id: int, db: Session = Depends(get_db)):
-#     success = ReportRepository.delete_report(db, id)
-#     if not success:
-#         raise HTTPException(status_code=400, detail="Report Not Valid")
-#     return {"message": "Report Deleted"}
-
-
-# ✅ Apply authentication **only to this route**
+# Apply authentication **only to this route**
 @router.delete("/{id}")
 def delete_report(
     id: int, 

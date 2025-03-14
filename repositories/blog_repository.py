@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from models import Blog
-from schemas import BlogDto
+from models.blog import Blog
+from schemas.blog import Blog as BlogDto
 from typing import List, Optional
 import os
 

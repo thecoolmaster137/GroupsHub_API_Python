@@ -25,13 +25,7 @@ def get_by_id(id: int, db: Session = Depends(get_db)):
     return {"id": app.app_id, "name": app.app_name}
 
 
-# @router.post("/", response_model=ApplicationResponse)
-# def add_application(application: ApplicationCreate, db: Session = Depends(get_db)):
-#     repo = AppRepository(db)
-#     return repo.add_app(application)
-
-
-# ✅ Apply authentication **only to this route**
+# Apply authentication **only to this route**
 @router.post("/", response_model=ApplicationResponse)
 def add_application(
     application: ApplicationCreate, 
@@ -47,17 +41,7 @@ def add_application(
     return repo.add_app(application)
 
 
-
-# @router.put("/{id}", response_model=ApplicationResponse)
-# def update_application(id: int, application: ApplicationCreate, db: Session = Depends(get_db)):
-#     repo = AppRepository(db)
-#     updated_app = repo.update_app(id, application)
-#     if not updated_app:
-#         raise HTTPException(status_code=404, detail="Application not found")
-    
-#     return {"id": updated_app.app_id, "name": updated_app.app_name}
-
-# ✅ Apply authentication **only to this route**
+# Apply authentication **only to this route**
 @router.put("/{id}", response_model=ApplicationResponse)
 def update_application(
     id: int, 
@@ -77,16 +61,7 @@ def update_application(
     
     return {"id": updated_app.app_id, "name": updated_app.app_name}
 
-
-# @router.delete("/{id}")
-# def delete_application(id: int, db: Session = Depends(get_db)):
-#     repo = AppRepository(db)
-#     if not repo.delete_app(id):
-#         raise HTTPException(status_code=404, detail="Application not found")
-#     return {"message": "Application deleted successfully"}
-
-
-# ✅ Apply authentication **only to this route**
+# Apply authentication **only to this route**
 @router.delete("/{id}")
 def delete_application(
     id: int, 
