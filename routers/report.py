@@ -5,6 +5,7 @@ from database import get_db
 from schemas.report import Report as ReportSchema
 from schemas.add_report import AddReport
 from repositories.report_repository import ReportRepository
+from security import get_current_user
 
 router = APIRouter(prefix="/report", tags=["Reports"])
 
@@ -27,17 +28,56 @@ def get_reports_by_group_id(group_id: int, db: Session = Depends(get_db)):
     return ReportRepository.get_by_group_id(db, group_id)
 
 
+# @router.post("/", response_model=ReportSchema)
+# def add_report(group_id: int, report_data: AddReport, db: Session = Depends(get_db)):
+#     report = ReportRepository.add_report(db, group_id, report_data)
+#     if report is None:
+#         raise HTTPException(status_code=400, detail="Invalid Group ID")
+#     return report
+
+
+# ✅ Apply authentication **only to this route**
 @router.post("/", response_model=ReportSchema)
-def add_report(group_id: int, report_data: AddReport, db: Session = Depends(get_db)):
+def add_report(
+    group_id: int,
+    report_data: AddReport,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Require authentication
+):
+    """Add a new report (Admin Only)."""
+    
+    if not current_user.get("is_admin"):  # Only allow admins
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     report = ReportRepository.add_report(db, group_id, report_data)
     if report is None:
         raise HTTPException(status_code=400, detail="Invalid Group ID")
+    
     return report
 
 
+# @router.delete("/{id}")
+# def delete_report(id: int, db: Session = Depends(get_db)):
+#     success = ReportRepository.delete_report(db, id)
+#     if not success:
+#         raise HTTPException(status_code=400, detail="Report Not Valid")
+#     return {"message": "Report Deleted"}
+
+
+# ✅ Apply authentication **only to this route**
 @router.delete("/{id}")
-def delete_report(id: int, db: Session = Depends(get_db)):
+def delete_report(
+    id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Require authentication
+):
+    """Delete a report by ID (Admin Only)."""
+    
+    if not current_user.get("is_admin"):  # Only allow admins
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     success = ReportRepository.delete_report(db, id)
     if not success:
         raise HTTPException(status_code=400, detail="Report Not Valid")
+    
     return {"message": "Report Deleted"}

@@ -53,6 +53,13 @@ def custom_openapi():
     # ✅ **Apply Security Only to POST /api/categories/**
     secured_endpoints = {
         "/api/categories/": ["post"],  # Only protect POST method
+        "/api/categories/{id}": ["put", "delete"],  # Protect PUT & DELETE
+        "/api/applications/": ["post"],  # Protect POST
+        "/api/applications/{id}": ["put", "delete"],  # Protect PUT & DELETE
+        "/api/groups/": ["post"],
+        "/api/groups/{group_id}": ["put", "delete"],  # Protect PUT & DELETE
+        "/api/report/": ["post"],  # Only protect POST method
+        "/api/report/{id}": ["put", "delete"],  # Protect PUT & DELETE
     }
 
     for path, methods in secured_endpoints.items():

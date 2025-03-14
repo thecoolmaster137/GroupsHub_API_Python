@@ -43,16 +43,40 @@ def add_category(
     new_category = CategoryRepository(db).add_category(category_data)
     return CategorySchema(id=new_category.id, name=new_category.name)
 
+# Apply authentication **only to this route**
 @router.put("/{id}", response_model=CategorySchema)
-def update_category(id: int, category_data: AddCategory, db: Session = Depends(get_db)):
+def update_category(
+    id: int, 
+    category_data: AddCategory, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Require authentication
+):
+    print("Current User Data:", current_user)  # Debugging
+
+    if not current_user.get("is_admin"):  # Only allow admins
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     updated_category = CategoryRepository(db).update_category(id, category_data)
     if not updated_category:
         raise HTTPException(status_code=404, detail="Category not found")
+    
     return updated_category
 
+
+# Apply authentication **only to this route**
 @router.delete("/{id}")
-def delete_category(id: int, db: Session = Depends(get_db)):
+def delete_category(
+    id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Require authentication
+):
+    print("Current User Data:", current_user)  # Debugging
+
+    if not current_user.get("is_admin"):  # Only allow admins
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     deleted = CategoryRepository(db).delete_category(id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Category not found")
+    
     return {"message": "Category deleted successfully"}
