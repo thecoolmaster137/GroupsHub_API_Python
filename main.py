@@ -5,11 +5,12 @@ from models.group import Group
 from models.report import Report
 from fastapi import FastAPI
 from database import Base, engine
+from fastapi.openapi.utils import get_openapi
+from fastapi.security import OAuth2PasswordBearer
 
-# Import routers correctly
-
+# Import routers
 from routers.application import router as application_router
-from routers.groups import   router as group_router
+from routers.groups import router as group_router
 from routers.category import router as category_router
 from routers.report import router as report_router
 from routers.auth import router as auth_router
@@ -19,12 +20,52 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="GroupsHub API", version="1.0.0")
 
-# Include routers with correct names
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")  # Ensure correct token URL
+
+# Include routers
 app.include_router(application_router, prefix="/api")
-app.include_router(category_router, prefix="/api")
+app.include_router(category_router, prefix="/api", tags=["Categories"])
 app.include_router(group_router, prefix="/api")
 app.include_router(report_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 
+# ✅ **Manually Define Bearer Auth for Swagger UI (Only for POST /api/categories/)**
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
 
-# Run the app using: uvicorn main:app --reload
+    openapi_schema = get_openapi(
+        title="GroupsHub API",
+        version="1.0.0",
+        description="API with JWT authentication for specific routes",
+        routes=app.routes,
+    )
+
+    # Define Bearer Authentication Scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+
+    # ✅ **Apply Security Only to POST /api/categories/**
+    secured_endpoints = {
+        "/api/categories/": ["post"],  # Only protect POST method
+    }
+
+    for path, methods in secured_endpoints.items():
+        if path in openapi_schema["paths"]:
+            for method in methods:
+                if method in openapi_schema["paths"][path]:
+                    openapi_schema["paths"][path][method]["security"] = [{"BearerAuth": []}]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi  # Apply custom OpenAPI settings
+
+# ✅ **Run the app using**:
+# uvicorn main:app --reload

@@ -1,4 +1,4 @@
-import jwt
+from jose import jwt,JWTError
 import datetime
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends, status
@@ -15,7 +15,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # OAuth2 scheme for authentication (updated token URL)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/signin")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/signin")
 
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -44,11 +44,7 @@ def decode_access_token(token: str):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# Get current user from token
 def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Extracts the user details from the JWT token.
-    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -57,10 +53,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        is_admin: bool = payload.get("is_admin", False)
+        is_admin: bool = payload.get("is_admin", False)  # Ensure this key exists
+        
         if username is None:
             raise credentials_exception
-        return {"sub": username, "is_admin": is_admin}
+        
+        user_data = {"sub": username, "is_admin": is_admin}
+        print("Authenticated User:", user_data)  # Debugging
+        return user_data
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
