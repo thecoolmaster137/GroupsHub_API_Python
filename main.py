@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +17,16 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="GroupsHub API", version="1.0.0")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")  # Ensure correct token URL
+
+# ✅ **Enable CORS for Frontend Access**
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500"],  # Adjust this when deploying frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Include routers
 app.include_router(application_router, prefix="/api")
