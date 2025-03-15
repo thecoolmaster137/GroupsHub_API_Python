@@ -10,6 +10,7 @@ from routers.groups import router as group_router
 from routers.category import router as category_router
 from routers.report import router as report_router
 from routers.auth import router as auth_router
+from routers.countries import router as countries_router
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -34,6 +35,7 @@ app.include_router(category_router, prefix="/api", tags=["Categories"])
 app.include_router(group_router, prefix="/api")
 app.include_router(report_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+app.include_router(countries_router, prefix="/api")
 
 # ✅ **Manually Define Bearer Auth for Swagger UI (Only for POST /api/categories/)**
 def custom_openapi():
@@ -62,7 +64,6 @@ def custom_openapi():
         "/api/categories/{id}": ["put", "delete"],  # Protect PUT & DELETE
         "/api/applications/": ["post"],  # Protect POST
         "/api/applications/{id}": ["put", "delete"],  # Protect PUT & DELETE
-        "/api/groups/": ["post"],
         "/api/groups/{group_id}": ["put", "delete"],  # Protect PUT & DELETE
         "/api/report/": ["post"],  # Only protect POST method
         "/api/report/{id}": ["put", "delete"],  # Protect PUT & DELETE

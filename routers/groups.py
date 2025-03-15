@@ -32,18 +32,13 @@ def fetch_group(group_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Group not found")
     return group
 
-# Apply authentication **only to this route**
 @router.post("/", response_model=Group)
 def create_group(
     group_data: AddGroup, 
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)  # Require authentication
+    db: Session = Depends(get_db)
 ):
     """Create a new group with validation and web scraping for details."""
     
-    if not current_user.get("is_admin"):  # Only allow admins
-        raise HTTPException(status_code=403, detail="Admin access required")
-
     # Validate the group link
     if not validate_url(group_data.group_link):
         raise HTTPException(status_code=400, detail="Invalid group link provided.")
