@@ -65,7 +65,6 @@ def custom_openapi():
         "/api/applications/": ["post"],  # Protect POST
         "/api/applications/{id}": ["put", "delete"],  # Protect PUT & DELETE
         "/api/groups/{group_id}": ["put", "delete"],  # Protect PUT & DELETE
-        "/api/report/": ["post"],  # Only protect POST method
         "/api/report/{id}": ["put", "delete"],  # Protect PUT & DELETE
     }
 

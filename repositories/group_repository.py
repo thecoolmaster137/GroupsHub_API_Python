@@ -41,7 +41,6 @@ def get_group_by_id(db: Session, group_id: int) -> Optional[GroupSchema]:
     
     return None
 
-
 def get_group_by_link(db: Session, group_link: str) -> Group:
     """Check if a group with the given link already exists."""
     return db.query(Group).filter(Group.group_link == group_link).first()
@@ -73,7 +72,6 @@ def delete_group(db: Session, group_id: int) -> bool:
         db.commit()
         return True
     return False
-
 
 def update_group(db: Session, group_id: int, group_data: AddGroup) -> Optional[dict]:
     """Update an existing group."""
@@ -112,5 +110,39 @@ def update_group(db: Session, group_id: int, group_data: AddGroup) -> Optional[d
         }
 
     return None
+
+def search_groups(
+    db: Session,
+    cat_id: Optional[int] = None,
+    country: Optional[str] = None,
+    language: Optional[str] = None,
+    app_id: Optional[int] = None
+) -> List[GroupSchema]:
+    """Search groups by category ID, country, language, and application ID. Returns all groups if no filters are applied."""
+
+    query = db.query(Group, Category.cat_name).outerjoin(Category, Group.cat_id == Category.cat_id)
+
+    # Apply filters based on provided parameters
+    filters = []
+    if cat_id is not None:
+        filters.append(Group.cat_id == cat_id)
+    if country:
+        filters.append(Group.country.ilike(f"%{country}%"))  # Case-insensitive match
+    if language:
+        filters.append(Group.language.ilike(f"%{language}%"))
+    if app_id is not None:
+        filters.append(Group.app_id == app_id)
+
+    if filters:
+        query = query.filter(*filters)  # Apply all filters
+
+    results = query.all()
+
+    return [
+        GroupSchema(
+            **group.__dict__,
+            cat_name=cat_name
+        ) for group, cat_name in results
+    ]
 
 

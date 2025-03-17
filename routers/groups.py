@@ -6,7 +6,8 @@ from repositories.group_repository import (
     get_group_by_id,
     add_group,
     delete_group,
-    update_group
+    update_group,
+    search_groups
 )
 from schemas.add_group import AddGroup
 from schemas.group import Group
@@ -14,7 +15,7 @@ from repositories.group_repository import add_group, get_group_by_link
 from services.group_scraper import get_group_image_and_name
 from models.category import Category  # Import Category model
 from validators import url as validate_url
-from typing import List
+from typing import List, Optional
 from security import get_current_user
 
 router = APIRouter(prefix="/groups", tags=["Groups"])
@@ -99,3 +100,17 @@ def remove_group(
         return {"message": "Group deleted successfully"}
     
     raise HTTPException(status_code=404, detail="Group not found")
+
+@router.get("/search/", response_model=List[Group])
+def search_groups_endpoint(
+    cat_id: Optional[int] = None,
+    country: Optional[str] = None,
+    language: Optional[str] = None,
+    app_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """Search groups by category ID, country, language, and application ID.
+    - If no filters are provided, returns all groups.
+    - Supports any combination of filters.
+    """
+    return search_groups(db, cat_id, country, language, app_id)

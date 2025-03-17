@@ -28,24 +28,16 @@ def get_reports_by_group_id(group_id: int, db: Session = Depends(get_db)):
     return ReportRepository.get_by_group_id(db, group_id)
 
 
-# Apply authentication **only to this route**
 @router.post("/", response_model=ReportSchema)
-def add_report(
-    group_id: int,
-    report_data: AddReport,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)  # Require authentication
-):
-    """Add a new report (Admin Only)."""
+def add_report(group_id: int, report_data: AddReport, db: Session = Depends(get_db)):
+    """Add a new report."""
     
-    if not current_user.get("is_admin"):  # Only allow admins
-        raise HTTPException(status_code=403, detail="Admin access required")
-
     report = ReportRepository.add_report(db, group_id, report_data)
     if report is None:
         raise HTTPException(status_code=400, detail="Invalid Group ID")
     
     return report
+
 
 # Apply authentication **only to this route**
 @router.delete("/{id}")
